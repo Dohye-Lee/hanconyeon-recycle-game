@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>분리배출 척척박사 | 한콘연</title>
+<meta name="description" content="한콘연과 함께하는 분리배출 게임. 선택한 문제를 풀며 올바른 분리배출 방법을 배워요. AI교육은 한콘연에서!">
+<meta property="og:title" content="분리배출 척척박사 – 어디에 버릴까?">
+<meta property="og:description" content="영수증은 종이일까? 달걀 껍데기는 음식물일까? 문제 수를 선택해 도전!">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1f8a4c">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23166a39'/%3E%3Ctext x='16' y='24' font-size='25' text-anchor='middle' fill='white'%3E%E2%99%BB%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1f8a4c; --green-d:#166a39; --green-l:#e6f5ea;
+  --ink:#1c2a22; --sub:#5a6b61; --bg:#f3f8ef; --card:#fff; --line:#dbe6da;
+  --ok:#1f8a4c; --ok-bg:#e3f6e8; --no:#d5402b; --no-bg:#fdeae6;
+  --title:"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  color:var(--ink);background:var(--bg);
+  word-break:keep-all;line-height:1.5;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+a{color:var(--green-d)}
+#app{
+  max-width:480px;margin:0 auto;min-height:100dvh;
+  padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;
+}
+.screen{display:none;flex:1;flex-direction:column}
+.screen.on{display:flex}
+
+/* 공통 */
+.btn{
+  display:block;width:100%;padding:16px;border-radius:16px;
+  background:var(--green);color:#fff;font-family:var(--title);font-size:1.35rem;
+  box-shadow:0 4px 0 var(--green-d);transition:transform .08s,box-shadow .08s;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--green-d)}
+.btn.ghost{background:#fff;color:var(--green-d);box-shadow:0 4px 0 var(--line);border:2px solid var(--line)}
+.btn:focus-visible,.bin:focus-visible{outline:3px solid #1a5fd0;outline-offset:2px}
+.foot{margin-top:auto;padding-top:18px;text-align:center;font-size:.8rem;color:var(--sub)}
+.foot a{font-weight:700;text-decoration:none}
+
+/* 시작 */
+.hero{text-align:center;padding:22px 0 6px}
+.hero .logo{font-size:4.2rem;line-height:1}
+.hero h1{font-family:var(--title);font-weight:400;font-size:2.3rem;margin:8px 0 2px;color:var(--green-d);line-height:1.2}
+.hero p{margin:0;color:var(--sub);font-size:1.05rem}
+.how{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px 16px;margin:18px 0}
+.how h2{font-family:var(--title);font-weight:400;font-size:1.15rem;margin:0 0 8px}
+.how ol{margin:0;padding-left:1.3em}
+.how li{margin:3px 0}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.steps div{background:var(--green-l);border-radius:14px;padding:10px 4px;text-align:center;font-size:.85rem;font-weight:700;color:var(--green-d)}
+.steps span{display:block;font-size:1.5rem;line-height:1.2}
+.best{text-align:center;color:var(--sub);font-size:.95rem;margin:12px 0 0;min-height:1.5em}
+
+/* 게임 */
+.hud{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-variant-numeric:tabular-nums}
+.hud .q{font-family:var(--title);font-weight:400;font-size:1.25rem}
+.hud .score{color:var(--green-d);font-size:1.1rem}
+.combo{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:#ffe9a8;color:#7a5200;font-size:.8rem;visibility:hidden}
+.combo.on{visibility:visible}
+.timer{height:8px;border-radius:99px;background:var(--line);margin:8px 0 12px;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--green);border-radius:99px;transform-origin:left}
+.card{
+  flex:1;min-height:190px;background:var(--card);border:2px solid var(--line);border-radius:22px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:14px 16px;margin-bottom:12px;
+}
+.card .emoji{font-size:4.6rem;line-height:1.1}
+.card .name{font-family:var(--title);font-size:1.8rem;line-height:1.25;margin-top:4px}
+.card .note{color:var(--sub);font-size:.95rem;margin-top:2px}
+.card .ask{color:var(--sub);font-size:.95rem;margin-top:10px}
+.card.ok{background:var(--ok-bg);border-color:var(--ok)}
+.card.no{background:var(--no-bg);border-color:var(--no)}
+.card .verdict{font-family:var(--title);font-size:1.5rem;line-height:1.2}
+.card.ok .verdict{color:var(--ok)} .card.no .verdict{color:var(--no)}
+.card .item-sm{font-weight:700;margin-top:4px}
+.card .why{margin:8px 0 12px;font-size:1.02rem}
+.card .btn{font-size:1.15rem;padding:12px;max-width:240px}
+.pop{animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.92);opacity:.4}to{transform:none;opacity:1}}
+
+.bins{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bin{
+  border-radius:16px;padding:9px 2px 8px;background:var(--c-bg);border:2px solid var(--c);
+  box-shadow:0 3px 0 var(--c);display:flex;flex-direction:column;align-items:center;gap:1px;
+  min-height:76px;justify-content:center;transition:transform .08s,opacity .2s;
+}
+.bin:active{transform:translateY(2px)}
+.bin .e{font-size:1.7rem;line-height:1.15}
+.bin .l{font-weight:800;font-size:.95rem;line-height:1.2}
+.bins.lock .bin{opacity:.35;pointer-events:none}
+.bins.lock .bin.right{opacity:1;outline:4px solid var(--ok);outline-offset:1px}
+.bins.lock .bin.wrong{opacity:1;outline:4px solid var(--no);outline-offset:1px;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* 결과 */
+.result{text-align:center;padding-top:14px}
+.result .medal{font-size:4rem;line-height:1}
+.result h2{font-family:var(--title);font-weight:400;font-size:2rem;margin:6px 0 0;color:var(--green-d)}
+.result .msg{color:var(--sub);margin:2px 0 12px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.stats div{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px}
+.stats b{display:block;font-family:var(--title);font-weight:400;font-size:1.7rem;color:var(--green-d);font-variant-numeric:tabular-nums}
+.stats small{color:var(--sub)}
+.review{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:6px 14px;margin:14px 0;text-align:left}
+.review h3{font-family:var(--title);font-weight:400;font-size:1.1rem;margin:8px 0 4px}
+.review li{list-style:none;padding:8px 0;border-top:1px solid var(--line);font-size:.95rem}
+.review ul{margin:0;padding:0}
+.review .t{font-weight:700}
+.review .x{color:var(--no)} .review .o{color:var(--ok)}
+.review .w{color:var(--sub);display:block}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1c2a22;color:#fff;padding:10px 18px;border-radius:99px;font-size:.95rem;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (max-height:640px){
+  .card .emoji{font-size:3.2rem}.card .name{font-size:1.45rem}.card{min-height:150px}
+  .bin{min-height:64px;padding:6px 2px}.bin .e{font-size:1.4rem}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 한콘연 브랜드와 구독 응원 안내 */
+body{background:radial-gradient(ellipse at 12% 0%,#e4f6e9 0,transparent 45%),radial-gradient(ellipse at 100% 85%,#eae1f6 0,transparent 40%),#f4f8f4}
+#app{max-width:600px;padding:20px 22px 24px}
+.brandbar{display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:6px;color:var(--green-d);font-size:.875rem;font-weight:700}
+.brandbar span{font-size:1.2rem}
+.hero{padding:12px 0 4px}
+.hero .logo{font-size:3.3rem}
+.hero h1{font-size:clamp(2rem,6.7vw,2.5rem);margin:10px 0 6px}
+.hero p{font-size:1rem}
+.how{margin:16px 0;border-width:1px;box-shadow:0 6px 20px #173c2510}
+.how li{font-size:1rem;margin:4px 0}
+.steps div{font-size:.875rem}
+.btn{border-radius:14px}
+.support{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;align-items:center;margin:20px 0 0;padding:16px;border:1px solid #ded6ef;border-radius:20px;background:linear-gradient(130deg,#fff 30%,#f3edff);text-align:left;box-shadow:0 5px 22px #3c1c7110}
+.support-avatar{display:block;width:76px;height:114px;object-fit:contain;filter:drop-shadow(0 5px 4px #4b26751a)}
+.support-title{margin:0 0 6px;font-family:var(--title);font-size:1.2rem;font-weight:400;line-height:1.3;color:#542781}
+.support p{font-size:.875rem;line-height:1.6;margin:0 0 10px;color:#4f4761}
+.youtube-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 14px;border-radius:11px;background:#d82332;color:#fff;font-size:.875rem;font-weight:800;text-decoration:none;transition:background .15s,transform .15s}
+.youtube-link:hover{background:#b81623;transform:translateY(-1px)}
+.youtube-link svg{width:26px;height:20px;flex-shrink:0}
+a:focus-visible,button:focus-visible{outline:3px solid #1a5fd0;outline-offset:4px}
+.foot{margin-top:16px;padding-top:6px;font-size:.8125rem;line-height:1.8}
+.foot a:hover{text-decoration:underline}
+.game-note{font-size:.875rem;color:var(--sub);margin:6px 0 0;text-align:center}
+.timer-caption{display:flex;justify-content:space-between;margin-top:5px;color:var(--sub);font-size:.875rem}
+.timer{margin-top:6px}
+.card{min-height:240px;flex:1;box-shadow:0 8px 24px #244e2e0a}
+.bin{min-height:82px}
+.bin:disabled{cursor:default}
+.bin .shortcut{position:absolute;top:4px;right:7px;font-size:.75rem;color:var(--sub);font-weight:600}
+.bin{position:relative}
+.stats small{font-size:.875rem}
+.result{padding-top:12px}
+.review .w{margin-top:5px;line-height:1.6}
+.result .support{margin-bottom:18px}
+@media(min-width:720px){#app{padding-top:30px}.screen#s-game{min-height:690px}.hero{padding-top:18px}.support{padding:18px 22px;grid-template-columns:76px minmax(0,1fr)}.bins{gap:10px}.bin{min-height:88px}.how{padding:18px 22px}.how h2{font-size:1.25rem}.steps div{padding:12px 6px}}
+@media(max-width:420px){#app{padding:14px 16px 20px}.brandbar{font-size:.8125rem}.support{grid-template-columns:62px minmax(0,1fr);gap:10px;padding:14px 12px}.support-avatar{width:62px;height:94px}.support-title{font-size:1.1rem}.youtube-link{padding:9px 10px}.bin .shortcut{display:none}.hero .logo{font-size:2.8rem}.card{min-height:200px}.bin{min-height:76px}}
+@media(hover:none){.bin .shortcut{display:none}}
+@media(max-height:640px){.card{min-height:165px}.bin{min-height:64px}.hero{padding-top:4px}}
+.settings{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.settings label{font-weight:700}select,input[type=text],#rank-name{font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink)}#rank-name{width:100%;margin:8px 0}.consent{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:12px 0}.sound{align-self:flex-end;padding:8px 12px;border:1px solid var(--line);background:white;border-radius:20px;font-size:14px}.leaderboard{margin-top:20px}.leaderboard p{font-size:14px;color:var(--sub)}#ranking{padding:0;list-style:none}#ranking li{display:flex;justify-content:space-between;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}#rank-status{font-size:14px}#rank-form h3{font-size:18px}#rank-refresh{font-size:14px;text-decoration:underline}button:disabled{opacity:.55;cursor:default}
+summary{cursor:pointer;font-weight:700;font-size:16px}.option-grid{display:grid;gap:14px;margin-top:16px}.option-grid label{display:grid;gap:6px}.option-grid select{width:100%;font-size:16px}.options p{font-size:14px;color:var(--sub)}#room-code{width:100%;font:inherit;font-size:18px;padding:12px;margin:8px 0 12px;border:1px solid var(--line);border-radius:10px;text-transform:uppercase}.result-actions{margin-top:16px}.result-actions .btn,.options .btn,#btn-retry{font-size:16px}#room-ranking{padding-left:24px}#room-ranking li{padding:8px 0}#sound-status,#card-status{font-size:14px}input[type=range]{width:100%}.timer-caption{flex-wrap:wrap}.row{align-items:stretch}#app{overflow-wrap:anywhere}
+[hidden]{display:none!important}.bin-hint{font-size:12px;color:var(--sub);line-height:1.3;margin-top:3px}.bin .l{font-size:14px}.bin{padding-bottom:10px}.bin .l{font-size:16px}.card .name{font-size:2rem}.bin{min-height:72px}</style>
+</head>
+<body>
+<div id="app">
+  <header class="brandbar"><span aria-hidden="true">♻</span>한콘연과 함께하는 분리배출 게임</header><button id="sound-toggle" class="sound" type="button" aria-pressed="true">🔊 효과음 켜짐</button>
+
+  <!-- 시작 화면 -->
+  <section class="screen on" id="s-start">
+    <div class="hero">
+      <div class="logo" aria-hidden="true">♻️</div>
+      <h1>분리배출 척척박사</h1>
+      <p>이 쓰레기, 어디에 버릴까?</p>
+    </div>
+    <div class="how">
+      <h2>이렇게 해요</h2>
+      <ol>
+        <li>쓰레기가 하나씩 나와요.</li>
+        <li>알맞은 <b>수거함</b>을 눌러요.</li>
+        <li>빨리 맞히고 연속으로 맞히면 점수가 올라요!</li>
+      </ol>
+    </div>
+    <div class="steps" aria-label="분리배출 4가지 원칙">
+      <div><span aria-hidden="true">🫗</span>비우기</div>
+      <div><span aria-hidden="true">🚿</span>헹구기</div>
+      <div><span aria-hidden="true">✂️</span>분리하기</div>
+      <div><span aria-hidden="true">🚫</span>섞지 않기</div>
+    </div>
+    <div class="settings"><label for="question-count">문제 수 <select id="question-count"><option value="5">5문제 · 가볍게</option><option value="10" selected>10문제 · 기본</option><option value="20">20문제 · 도전</option><option value="30">30문제 · 집중</option></select></label></div>
+    <details class="how options"><summary>⚙️ 게임 설정 · 소리 / 난이도 / 주제</summary><div class="option-grid">
+<label>난이도<select id="difficulty"><option value="beginner">초보 · 골고루</option><option value="kids">어린이 · 쉬운 문제</option><option value="challenge">도전 · 헷갈리는 문제</option></select></label>
+<label>주제<select id="topic"><option value="all">전체</option><option value="food">음식물과 일반쓰레기</option><option value="plastic">플라스틱과 비닐</option><option value="tricky">헷갈리는 쓰레기</option></select></label>
+<label>진행 방식<select id="mode"><option value="challenge">도전 · 빠르게 맞히면 보너스</option><option value="practice">연습 · 시간 없이 천천히</option></select></label>
+<label>효과음<select id="sound-option"><option value="on">켜기</option><option value="off">끄기</option></select></label>
+<label>소리 크기<input id="volume" type="range" min="0.1" max="1" step="0.1" value="0.7"></label><button class="btn ghost" type="button" id="sound-test">🔊 소리 들어보기</button><p id="sound-status" role="status"></p></div></details>
+    <details class="how options"><summary>👥 강의용 단체 대결</summary><p>방을 만들고 참여 코드를 알려주세요. 같은 문제와 설정으로 함께 도전해요.</p><label for="room-code">참여 코드</label><input id="room-code" maxlength="6" placeholder="6자리 코드" autocomplete="off"><div class="row"><button class="btn ghost" id="room-create" type="button">방 만들기</button><button class="btn" id="room-join" type="button">코드로 참여</button></div><p id="room-status" role="status"></p><button id="room-leave" type="button" hidden>단체 대결 나가기</button><ol id="room-ranking"></ol><button id="room-refresh" type="button" hidden>우리 방 순위 새로고침</button></details>
+    <button class="btn" id="btn-start">게임 시작</button>
+    
+    <aside class="support" aria-label="한콘연 AI교육과 유튜브 구독 응원">
+      <img class="support-avatar" src="assets/heyi-avatar.png" alt="보라색 옷을 입은 혜이 아바타" width="76" height="114">
+      <div>
+        <h2 class="support-title">AI교육은 한콘연에서</h2>
+        <p>게임이 즐거웠다면, 구독으로 응원해주세요.<br>생활과 일에 바로 쓰는 AI도 함께 배워요.</p>
+        <a class="youtube-link" href="https://youtube.com/channel/UCWOyWT0vXHyEwOhfwvilwgg?si=xEQqn7U0DcAOd0gy" target="_blank" rel="noopener noreferrer" aria-label="이도혜 AI @이도혜.ai 유튜브 채널에서 구독으로 응원하기, 새 탭에서 열기">
+          <svg viewBox="0 0 28 20" aria-hidden="true"><path fill="white" d="M26.6 3.1A3.5 3.5 0 0 0 24.1.6C22 .1 14 .1 14 .1S6 .1 3.9.6A3.5 3.5 0 0 0 1.4 3.1C.9 5.3.9 10 .9 10s0 4.7.5 6.9a3.5 3.5 0 0 0 2.5 2.5c2.1.5 10.1.5 10.1.5s8 0 10.1-.5a3.5 3.5 0 0 0 2.5-2.5c.5-2.2.5-6.9.5-6.9s0-4.7-.5-6.9Z"/><path fill="#d82332" d="m11.2 14.3 7.3-4.3-7.3-4.3Z"/></svg>
+          유튜브 구독으로 응원하기
+        </a>
+      </div>
+    </aside>
+    <div class="foot">
+      종이팩은 일반 종이와 별도 배출해요.<br>세부 기준은 사는 지역마다 다를 수 있어요.<br>
+      만든 곳 · <a href="https://cafe.naver.com/gptdohye" target="_blank" rel="noopener">한국AI콘텐츠연구소</a>
+    </div>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section class="screen" id="s-game">
+    <div class="hud">
+      <span class="q" id="hud-q">1 / 10</span>
+      <span><span class="score" id="hud-score">0점</span><span class="combo" id="hud-combo"></span></span>
+    </div>
+    <div class="timer-caption" id="timer-caption"><span>빠르게 맞히면 보너스!</span><span>천천히 풀어도 괜찮아요</span></div>
+    <div class="timer" id="timer-track" aria-hidden="true"><i id="timer"></i></div>
+    <div class="card" id="card" aria-live="polite"></div>
+    <div class="bins" id="bins"></div>
+    <p class="game-note">알맞은 수거함을 눌러주세요.</p>
+  </section>
+
+  <!-- 결과 화면 -->
+  <section class="screen" id="s-result">
+    <div class="result">
+      <div class="medal" id="r-medal" aria-hidden="true"></div>
+      <h2 id="r-title"></h2>
+      <p class="msg" id="r-msg"></p>
+      <div class="stats">
+        <div><b id="r-correct"></b><small>맞힌 문제</small></div>
+        <div><b id="r-score"></b><small>점수</small></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btn-retry">설정 바꿔 다시 하기</button>
+        <button class="btn ghost" id="btn-share">친구에게 공유</button>
+      </div>
+      <aside class="support" aria-label="유튜브 구독으로 응원">
+        <img class="support-avatar" src="assets/heyi-avatar.png" alt="혜이 아바타" width="76" height="114" loading="lazy">
+        <div>
+          <h3 class="support-title">AI교육은 한콘연에서</h3>
+          <p>오늘의 도전, 즐거우셨나요?<br>유튜브 구독은 다음 콘텐츠를 만드는 힘이 돼요.</p>
+          <a class="youtube-link" href="https://youtube.com/channel/UCWOyWT0vXHyEwOhfwvilwgg?si=xEQqn7U0DcAOd0gy" target="_blank" rel="noopener noreferrer" aria-label="이도혜 AI @이도혜.ai 유튜브 채널에서 구독으로 응원하기, 새 탭에서 열기">
+            <svg viewBox="0 0 28 20" aria-hidden="true"><path fill="white" d="M26.6 3.1A3.5 3.5 0 0 0 24.1.6C22 .1 14 .1 14 .1S6 .1 3.9.6A3.5 3.5 0 0 0 1.4 3.1C.9 5.3.9 10 .9 10s0 4.7.5 6.9a3.5 3.5 0 0 0 2.5 2.5c2.1.5 10.1.5 10.1.5s8 0 10.1-.5a3.5 3.5 0 0 0 2.5-2.5c.5-2.2.5-6.9.5-6.9s0-4.7-.5-6.9Z"/><path fill="#d82332" d="m11.2 14.3 7.3-4.3-7.3-4.3Z"/></svg>
+            유튜브 구독으로 응원하기
+          </a>
+        </div>
+      </aside>
+      <div id="result-room" class="how" hidden><h3 id="result-room-title">우리 방 순위</h3><ol id="result-room-ranking"></ol><button id="result-room-refresh" class="btn ghost" type="button">우리 방 순위 새로고침</button></div><div class="row result-actions"><button class="btn ghost" id="retry-wrong">틀린 문제만 다시</button><button class="btn ghost" id="save-card">결과 카드 저장</button></div><p id="card-status" role="status"></p>
+      <form id="rank-form" class="how" style="text-align:left"><h3>내 기록을 공개 랭킹에 남길까요?</h3><label for="rank-name">닉네임 (1~12자)</label><input id="rank-name" maxlength="12" placeholder="예: 지구지킴이" required autocomplete="off"><label class="consent"><input type="checkbox" id="rank-consent" required> 닉네임·점수·정답 수가 누구에게나 공개되는 데 동의해요.</label><button class="btn" id="rank-submit" type="submit">이 기록 공개하기</button><p id="rank-status" role="status"></p></form>
+      <div class="review">
+        <h3>다시 보기</h3>
+        <ul id="r-list"></ul>
+      </div>
+    </div>
+    <div class="foot">
+      종이팩은 일반 종이와 별도 배출해요.<br>세부 기준은 사는 지역마다 다를 수 있어요.<br>
+      AI 공부 함께 해요 · <a href="https://cafe.naver.com/gptdohye" target="_blank" rel="noopener">한국AI콘텐츠연구소 네이버 카페</a>
+    </div>
+  </section>
+<section class="how leaderboard"><h2>🏆 모두의 랭킹</h2><div class="settings"><label for="rank-filter">문제 수 <select id="rank-filter"><option>5</option><option selected>10</option><option>20</option><option>30</option></select></label><button id="rank-refresh" type="button">새로고침</button></div><p>도전 모드 · 전체 주제 · 초보 난이도 기준 상위 50개 기록 · 같은 점수는 정답 수, 등록 순으로 정렬해요.</p><ol id="ranking" aria-live="polite"></ol></section></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ───────── 수거함 ───────── */
+const BINS = [
+  {id:'paper',  e:'📰', l:'종이',       c:'#2f7fd1', bg:'#e4f0fc'},
+  {id:'pack',   e:'🧃', l:'종이팩', c:'#7a5bc7', bg:'#eee8fb'},
+  {id:'plastic',e:'🧴', l:'플라스틱',   c:'#d99a00', bg:'#fff3cf'},
+  {id:'vinyl',  e:'🛍️', l:'비닐',       c:'#d95c8a', bg:'#fde6ee'},
+  {id:'can',    e:'🥫', l:'캔·고철',    c:'#2e9a5a', bg:'#e2f5e8'},
+  {id:'glass',  e:'🍾', l:'유리병',     c:'#2aa3b8', bg:'#e0f5f8'},
+  {id:'food',   e:'🍎', l:'음식물',     c:'#e07a1f', bg:'#fdecd9'},
+  {id:'trash',  e:'🗑️', l:'일반쓰레기', c:'#6b7580', bg:'#eceff1'},
+  {id:'special',e:'🔋', l:'전용 수거함', c:'#c8452f', bg:'#fce7e2'},
+];
+const BIN = Object.fromEntries(BINS.map(b=>[b.id,b]));
+
+/* ───────── 품목 (h:1 = 헷갈리는 품목) ───────── */
+const ITEMS = [
+  // 종이
+  {e:'📰',n:'신문지',a:'paper',w:'물에 젖지 않게 펴서 차곡차곡 쌓아 배출해요.'},
+  {e:'📦',n:'택배 상자',a:'paper',w:'테이프와 송장 스티커를 떼고 납작하게 접어서 배출해요.'},
+  {e:'📚',n:'다 쓴 공책',a:'paper',w:'스프링이나 비닐 표지는 떼고 종이만 배출해요.'},
+  {e:'🛍️',n:'종이 쇼핑백',a:'paper',w:'끈 손잡이처럼 종이가 아닌 부분은 떼고 배출해요.'},
+  // 종이팩
+  {e:'🧃',n:'우유팩',a:'pack',h:1,w:'종이팩은 일반 종이와 따로 배출해요. 비우고 헹군 뒤 빨대·플라스틱 캡을 떼고 펼쳐 말려요. 종이팩 전용함이 없으면 주민센터나 관리사무소에 수거 방법을 확인해요.'},
+  {e:'🧃',n:'두유팩',note:'안쪽이 은색인 멸균팩',a:'pack',h:1,w:'안쪽이 은색인 멸균팩도 종이팩이에요. 일반 종이와 섞지 말고 비우고 헹궈 말려 배출해요. 일반팩·멸균팩을 구분하는 수거함은 표시를 따라주세요.'},
+  // 플라스틱
+  {e:'💧',n:'생수 페트병',a:'plastic',w:'라벨을 떼고 찌그러뜨린 뒤 뚜껑을 닫아요. 투명 페트병 전용함이 있으면 거기에 넣어요.'},
+  {e:'🧴',n:'샴푸통',a:'plastic',w:'속을 헹궈서 배출해요. 스프링이 든 펌프는 떼어서 일반쓰레기로 버려요.'},
+  {e:'🥡',n:'깨끗이 씻은 배달 용기',a:'plastic',h:1,w:'음식물을 깨끗이 씻어 냈다면 플라스틱으로 재활용돼요.'},
+  {e:'🍦',n:'요구르트 통',note:'헹군 것',a:'plastic',w:'뚜껑 비닐을 떼고 속을 헹궈서 배출해요.'},
+  // 비닐
+  {e:'🍪',n:'과자 봉지',a:'vinyl',w:'속을 털어 내고 비닐류로 배출해요. 딱지처럼 접지 말고 펴서 버려요.'},
+  {e:'🍜',n:'라면 봉지',a:'vinyl',w:'가루나 부스러기를 털어 내고 비닐류로 배출해요.'},
+  {e:'🫧',n:'뽁뽁이',note:'에어캡',a:'vinyl',w:'뽁뽁이도 비닐이에요. 테이프를 떼고 비닐류로 배출해요.'},
+  {e:'🛍️',n:'비닐봉지',a:'vinyl',w:'이물질이 없는 깨끗한 비닐봉지는 비닐류로 배출해요.'},
+  // 캔·고철
+  {e:'🥤',n:'음료수 캔',a:'can',w:'내용물을 비우고 헹군 뒤 찌그러뜨려서 배출해요.'},
+  {e:'🥫',n:'참치 캔',a:'can',w:'기름기를 헹궈 내고 캔류로 배출해요.'},
+  {e:'🔥',n:'빈 부탄가스 용기',note:'잔여 가스까지 완전히 비운 상태',a:'can',h:1,w:'가스를 완전히 비운 부탄가스 용기는 캔·고철로 배출해요. 남은 가스가 있는 용기는 그대로 버리지 말고, 화기 없는 통풍이 잘되는 곳에서 제품·지자체 안내에 따라 처리해요. 가스가 남은 상태에서 구멍을 뚫거나 가열하지 마세요.'},
+  {e:'🍳',n:'낡은 프라이팬',a:'can',h:1,w:'금속으로 된 프라이팬·냄비는 고철로 배출해요.'},
+  // 유리병
+  {e:'🍾',n:'빈 소주병',a:'glass',w:'유리병으로 배출해요. 가게에 돌려주면 보증금을 받을 수도 있어요.'},
+  {e:'🫙',n:'빈 잼 병',a:'glass',w:'속을 헹구고 금속 뚜껑은 따로 떼어 캔류로 배출해요.'},
+  {e:'🧃',n:'유리 음료수병',a:'glass',w:'내용물을 비우고 헹궈서 유리병으로 배출해요.'},
+  // 음식물
+  {e:'🍎',n:'사과 껍질',a:'food',w:'부드러운 과일 껍질은 음식물 쓰레기예요.'},
+  {e:'🍌',n:'바나나 껍질',a:'food',w:'바나나 껍질은 음식물 쓰레기로 버려요.'},
+  {e:'🍉',n:'수박 껍질',a:'food',h:1,w:'수박 껍질은 음식물 쓰레기예요. 잘게 썰어서 버리면 좋아요.'},
+  {e:'🍚',n:'남은 밥',a:'food',w:'물기를 빼고 음식물 쓰레기로 버려요.'},
+  {e:'🍊',n:'귤 껍질',a:'food',w:'귤 껍질은 음식물 쓰레기로 버려요.'},
+  // 일반쓰레기 (헷갈리는 것들)
+  {e:'🧾',n:'영수증',a:'trash',h:1,w:'영수증은 약품 처리된 종이(감열지)라서 재활용이 안 돼요.'},
+  {e:'🍜',n:'컵라면 용기',note:'국물 자국이 밴 것',a:'trash',h:1,w:'국물이 배어 씻기지 않는 용기는 재활용이 어려워요.'},
+  {e:'🍗',n:'기름 묻은 치킨 상자',a:'trash',h:1,w:'기름이나 양념이 묻은 종이는 재활용이 안 돼요.'},
+  {e:'🪥',n:'칫솔',a:'trash',h:1,w:'칫솔은 솔과 손잡이의 재질이 달라서 재활용이 어려워요.'},
+  {e:'🥚',n:'달걀 껍데기',a:'trash',h:1,w:'달걀 껍데기는 동물 사료로 쓸 수 없어서 음식물이 아니에요.'},
+  {e:'🍖',n:'닭 뼈',a:'trash',h:1,w:'뼈는 딱딱해서 음식물 처리 기계를 망가뜨려요. 일반쓰레기예요.'},
+  {e:'🐚',n:'조개 껍데기',a:'trash',h:1,w:'조개·굴·전복 껍데기는 음식물이 아니라 일반쓰레기예요.'},
+  {e:'🦀',n:'게 껍데기',a:'trash',h:1,w:'게·가재 같은 갑각류 껍데기는 일반쓰레기예요.'},
+  {e:'🧅',n:'양파 껍질',a:'trash',h:1,w:'양파·마늘·옥수수 껍질은 질겨서 음식물로 처리하지 못해요.'},
+  {e:'🍑',n:'복숭아 씨',a:'trash',h:1,w:'복숭아·감·살구의 딱딱한 씨는 일반쓰레기예요.'},
+  {e:'🌰',n:'호두 껍데기',a:'trash',h:1,w:'호두·밤·땅콩의 딱딱한 껍데기는 일반쓰레기예요.'},
+  {e:'🐟',n:'생선 가시',a:'trash',h:1,w:'생선 뼈와 가시는 음식물이 아니라 일반쓰레기예요.'},
+  {e:'🍵',n:'다 우린 녹차 티백',a:'trash',h:1,w:'다 우린 티백은 음식물이나 종이 재활용이 아니에요. 물기를 빼고 일반 종량제봉투에 넣어요. 분리한 차 찌꺼기도 지자체 기준을 확인해요.'},
+  {e:'🍷',n:'깨진 유리컵',a:'trash',h:1,w:'깨진 유리컵은 유리병 수거함에 넣지 않아요. 두꺼운 종이 등으로 안전하게 감싸 깨진 유리라고 표시하세요. 지역 지침에 따라 불연성 전용 마대 또는 허용되는 소량의 종량제 배출 방법을 확인해요.'},
+  {e:'🍽️',n:'깨진 도자기 접시',a:'trash',h:1,w:'도자기는 유리병 재활용 대상이 아니에요. 날카로운 부분을 안전하게 감싸고, 지자체의 불연성폐기물 전용 마대 등 배출 방법을 따라요.'},
+  {e:'🧻',n:'물티슈',a:'trash',h:1,w:'물티슈는 종이가 아니라 플라스틱 섬유예요. 일반쓰레기로 버려요.'},
+  {e:'🧤',n:'고무장갑',a:'trash',h:1,w:'고무장갑은 비닐도 플라스틱도 아니에요. 일반쓰레기예요.'},
+  {e:'🧊',n:'젤 아이스팩',a:'trash',h:1,w:'젤이 든 아이스팩은 뜯지 말고 통째로 일반쓰레기로 버려요. 전용 수거함이 있으면 거기에 넣어요.'},
+  {e:'🍐',n:'과일 포장 그물',note:'푹신한 과일망',a:'trash',h:1,w:'과일을 감싼 푹신한 그물은 재활용이 어려워 일반쓰레기예요.'},
+  {e:'🖊️',n:'볼펜',a:'trash',h:1,w:'볼펜은 여러 재질이 섞여 있어서 일반쓰레기로 버려요.'},
+  {e:'💿',n:'CD',a:'trash',h:1,w:'CD·DVD는 플라스틱 재활용 대상이 아니에요.'},
+  {e:'😷',n:'쓰고 난 마스크',a:'trash',w:'마스크는 끈을 잘라 일반쓰레기로 버려요.'},
+  {e:'🥢',n:'나무젓가락',a:'trash',h:1,w:'나무젓가락은 재활용이 안 돼요. 일반쓰레기예요.'},
+  {e:'🏷️',n:'택배 송장 스티커',a:'trash',h:1,w:'송장과 테이프는 종이가 아니에요. 떼어서 일반쓰레기로 버려요.'},
+  {e:'🖼️',n:'인화한 사진',a:'trash',h:1,w:'사진·명함처럼 코팅된 종이는 재활용이 안 돼요.'},
+  {e:'✨',n:'쓰고 난 알루미늄 호일',a:'trash',h:1,w:'알루미늄 호일과 은박지는 일반쓰레기로 버려요.'},
+  // 전용 수거함
+  {e:'🔋',n:'다 쓴 건전지',a:'special',h:1,w:'건전지는 금속으로 보여도 캔·고철이나 일반쓰레기가 아니에요. 제품에서 분리해 주민센터·아파트 등의 폐건전지 전용 수거함에 배출해요. 수거 위치는 지자체에 확인할 수 있어요.'},
+  {e:'💡',n:'형광등',a:'special',h:1,w:'형광등에는 수은이 들어 있어요. 깨지지 않게 폐형광등 수거함에 넣어요.'},
+  {e:'💊',n:'먹다 남은 약',a:'special',h:1,w:'약은 물과 땅을 오염시켜요. 약국·보건소·주민센터의 폐의약품 수거함에 넣어요.'},
+  {e:'📱',n:'고장 난 휴대폰',a:'special',h:1,w:'휴대폰 같은 작은 전자제품은 폐가전 수거함에 넣거나 무상 방문수거를 신청해요.'},
+  // 추가 품목: 기존 품목 순서는 단체방 문제 보존을 위해 유지
+  {"e": "🧃", "n": "주스 종이팩", "note": "플라스틱 병이 아닌 종이팩", "a": "pack", "h": 1, "w": "주스가 담겼던 종이팩은 일반 종이와 별도 배출해요. 내용물을 비우고 헹군 뒤 빨대·캡 등 다른 재질을 떼고 말려 종이팩 수거함에 넣어요."},
+  {"e": "🍵", "n": "다 우린 홍차 티백", "note": "차가 든 일회용 티백", "a": "trash", "h": 1, "w": "티백은 음식물도 일반 종이 재활용도 아니에요. 물기를 빼고 일반 종량제봉투에 배출해요."},
+  {"e": "🍾", "n": "깨진 유리병", "a": "trash", "h": 1, "w": "깨진 유리병은 유리병 재활용함에 넣지 않아요. 두꺼운 종이로 감싸 깨진 유리라고 표시하고, 지역의 불연성 마대 또는 소량 종량제 배출 기준을 확인해요."},
+  {"e": "🥘", "n": "내열 유리 식기", "note": "오븐용 내열 유리 용기", "a": "trash", "h": 1, "w": "내열 유리 식기는 일반 유리병과 재질·처리 방법이 달라 유리병 수거함에 넣지 않아요. 지자체의 불연성폐기물 배출 기준을 따라요."},
+  {"e": "🔋", "n": "다 쓴 보조배터리", "a": "special", "h": 1, "w": "보조배터리는 일반쓰레기에 넣지 않아요. 주민센터 등에 보조배터리·폐리튬전지를 받는 수거처를 확인하고 배출해요. 억지로 뜯거나 구멍 내지 마세요."},
+  {"e": "🦪", "n": "굴 껍데기", "a": "trash", "h": 1, "w": "굴 껍데기는 음식물쓰레기가 아니에요. 지자체 안내에 따라 일반 종량제봉투 등에 배출해요."},
+  {"e": "🥭", "n": "망고의 단단한 씨", "a": "trash", "h": 1, "w": "망고처럼 단단하고 큰 과일 씨는 음식물쓰레기로 넣지 않아요. 일반 종량제봉투에 배출해요."},
+  {"e": "🧻", "n": "사용한 휴지", "a": "trash", "h": 1, "w": "사용한 휴지는 종이 재활용함에 넣지 않아요. 일반 종량제봉투로 배출해요."},
+
+  {n:'다 쓴 버튼형 건전지',note:'시계에서 분리한 동전 모양 전지',a:'special',h:1,w:'작은 버튼형 전지도 폐건전지예요. 캔·고철이나 일반쓰레기에 섞지 말고 폐건전지 전용 수거함에 배출해요. 어린이의 손이 닿지 않게 보관해요.'},
+  {n:'다 쓴 충전식 AA 건전지',a:'special',h:1,w:'충전식 건전지도 폐건전지 전용 수거함에 배출해요. 제품에서 분리 가능한 전지는 따로 빼서 배출하고, 억지로 분해하거나 구멍을 내지 마세요.'},
+  {n:'빈 캠핑용 부탄가스통',note:'내용물과 잔여 가스를 완전히 비운 금속 용기',a:'can',h:1,w:'가스를 완전히 비운 금속 가스통은 캔·고철이에요. 폐건전지 수거함에 넣지 않아요. 잔여 가스가 있으면 먼저 제품·지자체의 안전 배출 안내를 확인하고, 화기 가까이에서 처리하거나 가스가 남은 통에 구멍을 뚫지 마세요.'},
+];
+
+/* ───────── 상태 ───────── */
+let TOTAL = 10; const TIME = 10000;
+const $ = id => document.getElementById(id);
+let round = [], idx = 0, score = 0, combo = 0, bestCombo = 0, log = [], t0 = 0, raf = 0, locked = false;
+
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); document.querySelector('.leaderboard').hidden=id==='s-game'; window.scrollTo(0,0); }
+let activeRoom=null, sessionConfig={difficulty:'beginner',topic:'all',mode:'challenge'}, isReview=false;
+function config(){return {difficulty:$('difficulty').value,topic:$('topic').value,mode:$('mode').value};}
+function poolFor(c){let pool=ITEMS.filter(i=>c.topic==='food'?['food','trash'].includes(i.a):c.topic==='plastic'?['plastic','vinyl'].includes(i.a):c.topic==='tricky'?i.h:true);if(c.difficulty==='kids')pool=pool.filter(i=>!i.h);if(c.difficulty==='challenge')pool=pool.filter(i=>i.h);return pool;}
+function pickRound(){const pool=poolFor(sessionConfig);return shuffle(pool).slice(0,TOTAL);}
+function prepareGame(items,review=false){round=items;TOTAL=items.length;isReview=review;idx=0;score=0;combo=0;bestCombo=0;log=[];submissionId=crypto.randomUUID();$('rank-submit').disabled=false;$('rank-status').textContent='';$('rank-consent').checked=false;const practice=review||sessionConfig.mode==='practice';$('timer-caption').hidden=practice;$('timer-track').hidden=practice;document.querySelector('.game-note').textContent=practice?'천천히 생각하고 수거함을 눌러주세요.':'알맞은 수거함을 눌러주세요.';show('s-game');next();}
+async function start(){await initAudio();playSound('start');sessionConfig=activeRoom?activeRoom.config:config();TOTAL=Number($('question-count').value);const items=activeRoom?activeRoom.items.map(i=>ITEMS[i]):pickRound();if(!items.length){toast('이 설정의 문제는 없어요. 난이도나 주제를 바꿔주세요.');return;}prepareGame(items);}
+function updateCount(){const n=poolFor(config()).length;const old=$('question-count').querySelector('[data-adaptive]');if(old)old.remove();if(n>0&&n<5){const o=document.createElement('option');o.value=String(n);o.textContent=n+'문제 · 이 설정의 전체 문제';o.dataset.adaptive='true';$('question-count').append(o);}for(const o of $('question-count').options){o.disabled=Number(o.value)>n;}if(Number($('question-count').value)>n){const available=[...$('question-count').options].filter(o=>!o.disabled);$('question-count').value=available[0]?.value||'5';}$('btn-start').disabled=!n;$('btn-start').textContent=n?`게임 시작 · ${Math.min(n,Number($('question-count').value))}문제`:'설정을 바꿔주세요';}
+['difficulty','topic','mode','question-count'].forEach(id=>$(id).onchange=updateCount);
+function renderBins(){
+  $('bins').innerHTML = BINS.map((b, i) =>
+    `<button class="bin" data-id="${b.id}" style="--c:${b.c};--c-bg:${b.bg}" aria-label="${b.l}">
+       <span class="shortcut" aria-hidden="true">${i + 1}</span><span class="l">${b.l}</span></button>`).join('');
+}
+
+function hud(){
+  $('hud-q').textContent = `${Math.min(idx + 1, TOTAL)} / ${TOTAL}`;
+  $('hud-score').textContent = `${score.toLocaleString()}점`;
+  const c = $('hud-combo');
+  c.textContent = `${combo}연속!`; c.classList.toggle('on', combo >= 2);
+}
+
+function next(){
+  if (idx >= TOTAL) return finish();
+  const it = round[idx];
+  locked = false;
+  const bins = $('bins'); bins.classList.remove('lock');
+  bins.querySelectorAll('.bin').forEach(b => { b.classList.remove('right','wrong'); b.disabled = false; });
+  const card = $('card'); card.className = 'card pop';
+  card.innerHTML = `<div class="name">${it.n}</div>${it.note ? `<div class="note">(${it.note})</div>` : ''}
+    <div class="ask">어디에 버릴까요?</div>`;
+  hud();
+  t0 = performance.now(); cancelAnimationFrame(raf); if(!isReview && sessionConfig.mode==='challenge')tick();
+}
+
+function tick(){
+  const left = Math.max(0, 1 - (performance.now() - t0) / TIME);
+  $('timer').style.transform = `scaleX(${left})`;
+  if (left > 0 && !locked) raf = requestAnimationFrame(tick);
+}
+
+function answer(id){
+  if (locked || !BIN[id] || !$('s-game').classList.contains('on') || !round[idx]) return;
+  locked = true; cancelAnimationFrame(raf);
+  const it = round[idx], ok = id === it.a;
+  const left = Math.max(0, 1 - (performance.now() - t0) / TIME);
+  if (ok) { combo++; bestCombo = Math.max(bestCombo, combo); score += (isReview || sessionConfig.mode==='practice') ? 100 : 100 + Math.round(left * 50) + Math.min(combo - 1, 5) * 20; }
+  else combo = 0;
+  playSound(ok ? 'correct' : 'wrong'); log.push({it, ok, picked:id});
+
+  const bins = $('bins'); bins.classList.add('lock');
+  bins.querySelectorAll('.bin').forEach(b => { b.disabled = true; });
+  bins.querySelector(`[data-id="${it.a}"]`).classList.add('right');
+  if (!ok) bins.querySelector(`[data-id="${id}"]`).classList.add('wrong');
+
+  const card = $('card'); card.className = 'card pop ' + (ok ? 'ok' : 'no');
+  card.innerHTML = `<div class="verdict">${ok ? '정답!' : '아쉬워요'}</div>
+    <div class="item-sm">${it.n} → ${BIN[it.a].l}</div>
+    <div class="why">${it.w}</div>
+    <button class="btn" id="btn-next">${idx + 1 >= TOTAL ? '결과 보기' : '다음 문제'}</button>`;
+  idx++; hud();
+  $('hud-q').textContent = `${idx} / ${TOTAL}`;
+  $('btn-next').onclick = next; $('btn-next').focus({preventScroll:true});
+}
+
+function finish(){
+  const n = log.filter(l => l.ok).length;
+  const g = n === TOTAL ? ['🏆','분리배출 척척박사','완벽해요! 지구가 고마워해요.']
+          : n / TOTAL >= .8 ? ['🌍','지구 지킴이','거의 다 왔어요. 조금만 더!']
+          : n / TOTAL >= .5 ? ['🌱','분리배출 새싹','잘하고 있어요. 틀린 문제를 다시 볼까요?']
+          : ['💪','분리배출 연습생','괜찮아요! 원래 헷갈려요. 한 번 더 해 봐요.'];
+  $('r-medal').textContent = g[0]; $('r-title').textContent = g[1]; $('r-msg').textContent = g[2];
+  $('r-correct').textContent = `${n} / ${TOTAL}`; $('r-score').textContent = `${score.toLocaleString()}점`;
+  $('r-list').innerHTML = log.map(l =>
+    `<li><span class="t"><span class="${l.ok ? 'o' : 'x'}">${l.ok ? '맞음' : '틀림'}</span> ${l.it.n} → ${BIN[l.it.a].l}</span>
+     <span class="w">${l.it.w}</span></li>`).join('');
+  playSound('finish'); $('retry-wrong').disabled=n===TOTAL;const eligible=!isReview && sessionConfig.mode==='challenge' && (activeRoom || ([5,10,20,30].includes(TOTAL) && (sessionConfig.difficulty==='beginner' && sessionConfig.topic==='all')));$('rank-form').hidden=!eligible;$('rank-form').querySelector('h3').textContent=activeRoom?'내 기록을 우리 방 순위에 남길까요?':'내 기록을 공개 랭킹에 남길까요?';$('r-msg').textContent += isReview?' · 오답 복습 완료':sessionConfig.mode==='practice'?' · 연습 모드':'';if([5,10,20,30].includes(TOTAL))$('rank-filter').value=String(TOTAL);loadRanking();$('result-room').hidden=!activeRoom;if(activeRoom){$('result-room-title').textContent='우리 방 순위 · '+activeRoom.code;loadRoomRanking();}
+  show('s-result');
+}
+
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1800); }
+
+async function share(){
+  const n = log.filter(l => l.ok).length;
+  const text = `분리배출 게임에서 ${TOTAL}문제 중 ${n}문제 맞혔어요! (${score.toLocaleString()}점) 나보다 잘할 수 있어요?`;
+  const url = location.href.split('#')[0];
+  if (navigator.share) { try { await navigator.share({title:'분리배출 척척박사', text, url}); } catch(e){} return; }
+  try { await navigator.clipboard.writeText(`${text}\n${url}`); toast('링크를 복사했어요!'); }
+  catch(e){ toast('주소창의 링크를 복사해 주세요'); }
+}
+
+let audioContext, soundEnabled=true, submissionId, audioFiles={};
+try{soundEnabled=localStorage.getItem('recycle-sound')!=='off';}catch{}
+for(const kind of ['start','correct','wrong','finish']){const a=new Audio('/sounds/'+kind+'.wav?v=2');a.preload='auto';audioFiles[kind]=a;}
+async function initAudio(){if(!soundEnabled)return;try{audioContext ||= new (window.AudioContext||window.webkitAudioContext)();await audioContext.resume();}catch{}}
+async function playSound(kind){if(!soundEnabled)return;const a=audioFiles[kind];a.volume=Number($('volume').value);a.currentTime=0;try{await a.play();$('sound-status').textContent='';}catch{if(audioContext?.state==='running'){const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=kind==='wrong'?180:660;g.gain.value=.15*Number($('volume').value);o.connect(g);g.connect(audioContext.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.3);o.stop(audioContext.currentTime+.3);}else $('sound-status').textContent='소리 들어보기를 다시 누르고 기기 음량을 확인해주세요.';}}
+function soundLabel(){$('sound-toggle').textContent=soundEnabled?'🔊 소리 켜짐':'🔇 소리 꺼짐';$('sound-toggle').setAttribute('aria-pressed',String(soundEnabled));$('sound-option').value=soundEnabled?'on':'off';}
+function setSound(enabled){soundEnabled=enabled;soundLabel();try{localStorage.setItem('recycle-sound',enabled?'on':'off');}catch{}if(enabled){initAudio();playSound('start');}}
+soundLabel();$('sound-toggle').onclick=()=>setSound(!soundEnabled);$('sound-option').onchange=()=>setSound($('sound-option').value==='on');$('sound-test').onclick=()=>{soundEnabled=true;soundLabel();initAudio();playSound('correct');};
+let rankRequest=0;
+async function loadRanking(){const seq=++rankRequest;$('ranking').textContent='랭킹을 불러오는 중…';try{const r=await fetch('/api/ranking?total='+$('rank-filter').value);if(!r.ok)throw Error();const data=await r.json();if(seq!==rankRequest)return;$('ranking').replaceChildren();if(!data.length){$('ranking').textContent='첫 번째 기록의 주인공이 되어보세요!';return;}data.forEach((row,i)=>{const li=document.createElement('li'),name=document.createElement('span'),points=document.createElement('strong');name.textContent=(i+1)+'. '+row.name;points.textContent=row.score.toLocaleString()+'점 · '+row.correct+'/'+row.total;li.append(name,points);$('ranking').append(li);});}catch{if(seq===rankRequest)$('ranking').textContent='랭킹을 불러오지 못했어요. 새로고침으로 다시 시도해주세요.';}}
+$('rank-filter').onchange=loadRanking;$('rank-refresh').onclick=loadRanking;
+$('rank-form').onsubmit=async e=>{e.preventDefault();if(!$('rank-consent').checked || !submissionId || isReview || sessionConfig.mode==='practice')return;const name=$('rank-name').value.trim();if(!name){$('rank-status').textContent='닉네임을 입력해주세요.';return;}$('rank-submit').disabled=true;$('rank-status').textContent='기록을 저장하는 중…';try{const r=await fetch('/api/ranking',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:submissionId,name,score,correct:log.filter(l=>l.ok).length,total:TOTAL,consent:true,room:activeRoom?.code||null})});if(!r.ok)throw Error();$('rank-status').textContent='공개 랭킹에 기록했어요!';await loadRanking();if(activeRoom)await loadRoomRanking();}catch{$('rank-status').textContent='저장하지 못했어요. 입력한 내용은 그대로예요. 다시 시도해주세요.';$('rank-submit').disabled=false;}};
+/* ───────── 이벤트 ───────── */
+renderBins(); updateCount(); loadRanking();
+$('btn-start').onclick = start;
+$('btn-retry').onclick = () => show('s-start');
+$('btn-share').onclick = share;
+$('retry-wrong').onclick=()=>{const wrong=log.filter(l=>!l.ok).map(l=>l.it);if(wrong.length){initAudio();playSound('start');prepareGame(shuffle(wrong),true);}};
+$('save-card').onclick=async()=>{const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1080;const c=canvas.getContext('2d');c.fillStyle='#e6f5ea';c.fillRect(0,0,1080,1080);c.fillStyle='#fff';c.fillRect(70,70,940,940);c.textAlign='center';c.fillStyle='#166a39';c.font='bold 60px sans-serif';c.fillText('분리배출 척척박사',540,220);c.font='40px sans-serif';c.fillText(($('rank-name').value.trim()||'지구 지킴이').slice(0,12),540,335);c.font='bold 96px sans-serif';c.fillText(score.toLocaleString()+'점',540,500);c.font='44px sans-serif';c.fillText('정답 '+log.filter(l=>l.ok).length+' / '+TOTAL+'문제',540,610);c.font='36px sans-serif';c.fillText($('r-title').textContent,540,730);c.font='28px sans-serif';c.fillText(isReview?'틀린 문제 복습':sessionConfig.mode==='practice'?'시간 없는 연습':'분리배출 도전',540,795);c.fillText('AI교육은 한콘연에서',540,910);canvas.toBlob(async blob=>{if(!blob)return;const file=new File([blob],'분리배출_결과.png',{type:'image/png'});try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'나의 분리배출 결과'});return;}}catch(e){if(e.name==='AbortError')return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='분리배출_결과.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);$('card-status').textContent='결과 카드를 PNG로 저장했어요.';},'image/png');};
+async function roomAction(create){const button=$(create?'room-create':'room-join');button.disabled=true;$('room-status').textContent='방을 연결하는 중…';try{const code=$('room-code').value.trim().toUpperCase();const r=await fetch(create?'/api/rooms':'/api/rooms/'+encodeURIComponent(code),create?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({config:config(),total:Number($('question-count').value),items:pickRoomItems()})}:{});if(!r.ok)throw Error();activeRoom=await r.json();$('room-code').value=activeRoom.code;$('room-status').textContent='참여 코드 '+activeRoom.code+' · 아래 게임 시작을 눌러주세요. 기록을 등록하면 우리 방 순위에 올라요.';$('room-leave').hidden=false;$('room-refresh').hidden=false;for(const id of ['difficulty','topic','mode']){$(id).value=activeRoom.config[id];$(id).disabled=true;}$('question-count').value=String(activeRoom.total);$('question-count').disabled=true;$('btn-start').textContent='단체 대결 시작';await loadRoomRanking();}catch{$('room-status').textContent='방을 연결하지 못했어요. 코드를 확인하고 다시 시도해주세요.';}button.disabled=false;}
+function pickRoomItems(){const pool=shuffle(poolFor(config()));return pool.slice(0,Number($('question-count').value)).map(i=>ITEMS.indexOf(i));}
+async function loadRoomRanking(){if(!activeRoom)return;try{const r=await fetch('/api/rooms/'+activeRoom.code+'/ranking');if(!r.ok)throw Error();const rows=await r.json();$('result-room-ranking').replaceChildren();$('room-ranking').replaceChildren();if(!rows.length)$('room-ranking').textContent='아직 등록한 기록이 없어요.';rows.forEach(x=>{const li=document.createElement('li');li.textContent=x.name+' · '+x.score+'점 · '+x.correct+'/'+x.total;$('room-ranking').append(li);const copy=document.createElement('li');copy.textContent=li.textContent;$('result-room-ranking').append(copy);});}catch{$('room-ranking').textContent='방 순위를 불러오지 못했어요. 새로고침해주세요.';$('result-room-ranking').textContent=$('room-ranking').textContent;}}
+$('room-create').onclick=()=>roomAction(true);$('room-join').onclick=()=>roomAction(false);$('room-refresh').onclick=loadRoomRanking;$('result-room-refresh').onclick=loadRoomRanking;$('room-leave').onclick=()=>{activeRoom=null;['difficulty','topic','mode','question-count'].forEach(id=>$(id).disabled=false);$('room-status').textContent='단체 대결에서 나왔어요.';$('room-ranking').replaceChildren();$('room-leave').hidden=true;$('room-refresh').hidden=true;updateCount();};
+$('bins').addEventListener('click', e => { const b = e.target.closest('.bin'); if (b) answer(b.dataset.id); });
+document.addEventListener('keydown', e => {
+  if (!$('s-game').classList.contains('on') || locked || e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = +e.key; if (k >= 1 && k <= 9) { e.preventDefault(); answer(BINS[k - 1].id); }
+});
+
+/* 지원하는 브라우저에서 게임의 동일한 동작을 AI 에이전트에 제공 */
+function getGameState(){
+  const status = $('s-start').classList.contains('on') ? 'ready' : $('s-result').classList.contains('on') ? 'finished' : locked ? 'feedback' : 'question';
+  const it = status === 'question' ? round[idx] : null;
+  return {
+    status, score, answered:log.length, total:TOTAL,
+    correct:log.filter(l => l.ok).length,
+    question:it ? {name:it.n,note:it.note || '',categories:BINS.map(b => ({id:b.id,label:b.l}))} : null,
+    feedback:status === 'feedback' ? {correct:log.at(-1).ok,category:log.at(-1).it.a,explanation:log.at(-1).it.w} : null
+  };
+}
+function validateToolInput(input, allowed){
+  if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(k => !allowed.includes(k))) throw new Error('올바른 입력값이 필요합니다.');
+}
+(function registerGameTools(){
+  const context = document.modelContext;
+  if (!context || typeof context.registerTool !== 'function') return;
+  const lifecycle = new AbortController();
+  const emptySchema = {type:'object',properties:{},additionalProperties:false};
+  const definitions = [
+    {name:'get_game_state',title:'게임 상태 확인',description:'현재 문제, 점수와 진행 상태를 확인합니다.',inputSchema:emptySchema,annotations:{readOnlyHint:true,untrustedContentHint:false},execute(input){validateToolInput(input,[]);return getGameState();}},
+    {name:'start_game',title:'분리배출 게임 시작',description:'선택한 문제 수로 게임을 시작합니다. 진행 중인 게임이 있으면 다시 시작합니다.',inputSchema:emptySchema,annotations:{readOnlyHint:false,untrustedContentHint:false},async execute(input){validateToolInput(input,[]);await start();return getGameState();}},
+    {name:'answer_question',title:'수거함 선택',description:'현재 문제의 수거함을 선택하고 정답 해설을 표시합니다.',inputSchema:{type:'object',properties:{category:{type:'string',enum:BINS.map(b => b.id)}},required:['category'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute(input){validateToolInput(input,['category']);if(typeof input.category !== 'string' || !BIN[input.category]) throw new Error('수거함을 확인해주세요.');if(getGameState().status !== 'question') throw new Error('먼저 게임을 시작하거나 다음 문제로 이동해주세요.');answer(input.category);return getGameState();}},
+    {name:'next_question',title:'다음 문제 또는 결과 보기',description:'정답 해설 이후 다음 문제를 표시합니다. 선택한 문제를 모두 풀었으면 결과를 표시합니다.',inputSchema:emptySchema,annotations:{readOnlyHint:false,untrustedContentHint:false},execute(input){validateToolInput(input,[]);if(getGameState().status !== 'feedback') throw new Error('먼저 현재 문제에 답해주세요.');next();return getGameState();}}
+  ];
+  definitions.forEach(tool => {try{Promise.resolve(context.registerTool(tool,{signal:lifecycle.signal})).catch(() => {});}catch(e){}});
+  window.addEventListener('pagehide',() => lifecycle.abort(),{once:true});
+})();
+</script>
+<footer class="foot" style="padding:0 16px 20px">분류 참고 · <a href="https://www.icbp.go.kr/main/life/clean/paperpack.jsp" target="_blank" rel="noopener">부평구 종이팩 안내</a> · <a href="https://www.korea.kr/news/policyNewsView.do?newsId=148958574" target="_blank" rel="noopener">폐전지 안내</a><br>실제 배출 전 거주지 지자체의 최신 수거 기준을 확인해주세요.</footer></body>
+</html>
